@@ -52,8 +52,7 @@
                         Disponível para projetos
                     </div>
                     <h1 class="hero-title">
-                        Desenvolvedor <span class="highlight" id="typing-text">Full Stack</span><br>
-                        & Infraestrutura
+                        Desenvolvendo <span class="highlight" id="typing-text"></span><span class="cursor">|</span><br> que impactam
                     </h1>
                     <p class="hero-description">
                         Especializado em criar soluções completas com Python, FastAPI, React Native e Django.  Experiência em deploy de aplicações em produção com Windows/Linux Server.
@@ -627,24 +626,46 @@
             navMenu.classList.toggle('active');
         });
 
-        // Typing effect for "Full Stack"
+        // Typing effect with word rotation
         const typingText = document.getElementById('typing-text');
         if (typingText) {
-            const text = 'Full Stack';
-            typingText.textContent = ''; // Clear initial text
-            let index = 0;
+            const words = ['Soluções', 'Aplicações', 'Inovações', 'Sites'];
+            let wordIndex = 0;
+            let charIndex = 0;
+            let isDeleting = false;
 
-            function typeWriter() {
-                if (index < text.length) {
-                    typingText.textContent += text.charAt(index);
-                    index++;
-                    setTimeout(typeWriter, 150);
+            function typeEffect() {
+                const currentWord = words[wordIndex];
+                
+                if (isDeleting) {
+                    typingText.textContent = currentWord.substring(0, charIndex - 1);
+                    charIndex--;
+                } else {
+                    typingText.textContent = currentWord.substring(0, charIndex + 1);
+                    charIndex++;
                 }
+
+                let typeSpeed = 150;
+
+                if (isDeleting) {
+                    typeSpeed /= 2;
+                }
+
+                if (!isDeleting && charIndex === currentWord.length) {
+                    typeSpeed = 2000; // Pause at end
+                    isDeleting = true;
+                } else if (isDeleting && charIndex === 0) {
+                    isDeleting = false;
+                    wordIndex = (wordIndex + 1) % words.length;
+                    typeSpeed = 500;
+                }
+
+                setTimeout(typeEffect, typeSpeed);
             }
 
             // Start typing effect after a short delay
             setTimeout(() => {
-                typeWriter();
+                typeEffect();
             }, 800);
         }
     </script>

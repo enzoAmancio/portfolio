@@ -52,7 +52,7 @@
                         Disponível para projetos
                     </div>
                     <h1 class="hero-title">
-                        Desenvolvendo <span class="highlight" id="typing-text"></span><span class="cursor">|</span><br> que impactam
+                        Desenvolvendo <span class="highlight" id="typing-text"></span><br> que impactam
                     </h1>
                     <p class="hero-description">
                         Especializado em criar soluções completas com Python, FastAPI, React Native e Django.  Experiência em deploy de aplicações em produção com Windows/Linux Server.
@@ -638,17 +638,18 @@
                 const currentWord = words[wordIndex];
                 
                 if (isDeleting) {
-                    typingText.textContent = currentWord.substring(0, charIndex - 1);
                     charIndex--;
                 } else {
-                    typingText.textContent = currentWord.substring(0, charIndex + 1);
                     charIndex++;
                 }
+
+                // Always show cursor during typing/deleting
+                typingText.innerHTML = currentWord.substring(0, charIndex) + '<span class="cursor">_</span>';
 
                 let typeSpeed = 150;
 
                 if (isDeleting) {
-                    typeSpeed /= 2;
+                    typeSpeed = 75;
                 }
 
                 if (!isDeleting && charIndex === currentWord.length) {

@@ -262,16 +262,23 @@
             min-width: 200px;
         }
 
-        .hero-title .highlight::after {
-            content: '|';
+        .hero-title .highlight .cursor {
             color: var(--primary-color);
-            animation: blink 0.7s infinite;
+            background: transparent;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: var(--primary-color);
+            animation: cursor-blink 0.8s ease-in-out infinite;
             margin-left: 2px;
+            font-weight: 400;
         }
 
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
+        @keyframes cursor-blink {
+            0%, 50% { 
+                opacity: 1; 
+            }
+            51%, 100% { 
+                opacity: 0; 
+            }
         }
 
         .hero-description {

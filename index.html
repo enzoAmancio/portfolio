@@ -830,16 +830,24 @@
             const animateElements = document.querySelectorAll('.animate-on-scroll');
             animateElements.forEach(el => observer.observe(el));
 
-            // Efeito parallax suave no hero
+            // Efeito parallax suave no hero (APENAS DESKTOP para não prejudicar legibilidade mobile)
             let ticking = false;
+            
+            // Função para verificar se está em desktop (>= 768px)
+            function isDesktop() {
+                return window.innerWidth >= 768;
+            }
+            
             window.addEventListener('scroll', () => {
-                if (!ticking) {
+                // Só aplica parallax em desktop
+                if (!ticking && isDesktop()) {
                     window.requestAnimationFrame(() => {
                         const scrolled = window.pageYOffset;
                         const hero = document.querySelector('.hero');
                         const heroContent = document.querySelector('.hero-content');
                         const heroImage = document.querySelector('.hero-image');
                         
+                        // Só aplica efeito se hero ainda está visível E em desktop
                         if (hero && scrolled < window.innerHeight) {
                             if (heroContent) {
                                 heroContent.style.transform = `translateY(${scrolled * 0.3}px)`;
@@ -855,6 +863,28 @@
                     });
                     ticking = true;
                 }
+            });
+            
+            // Reset styles no mobile quando janela é redimensionada
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (!isDesktop()) {
+                        const heroContent = document.querySelector('.hero-content');
+                        const heroImage = document.querySelector('.hero-image');
+                        
+                        // Reseta estilos inline em mobile
+                        if (heroContent) {
+                            heroContent.style.transform = '';
+                            heroContent.style.opacity = '';
+                        }
+                        if (heroImage) {
+                            heroImage.style.transform = '';
+                            heroImage.style.opacity = '';
+                        }
+                    }
+                }, 250);
             });
         });
     </script>

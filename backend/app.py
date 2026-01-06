@@ -19,11 +19,11 @@ app = Flask(__name__)
 CORS(app)
 
 # Configurações SMTP
-SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
-SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
-SMTP_EMAIL = os.getenv('SMTP_EMAIL', 'seu-email@gmail.com')
-SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', 'sua-senha-app')
-RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL', 'enzoamancio17@gmail.com')
+SMTP_SERVER = os.getenv('SMTP_SERVER')
+SMTP_PORT = os.getenv('SMTP_PORT')
+SMTP_EMAIL = os.getenv('SMTP_EMAIL')
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
 
 
 def get_email_template_to_admin(name, email, subject, message):

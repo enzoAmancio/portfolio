@@ -1,6 +1,6 @@
 """
 Backend Flask para envio de emails do portfólio
-Configurado com SMTP para Gmail
+Configurado com SMTP para Gmail + Cloudflare Turnstile (Captcha)
 """
 
 from flask import Flask, request, jsonify
@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+import requests  # Para validação do Turnstile
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -25,11 +26,13 @@ SMTP_EMAIL = os.getenv('SMTP_EMAIL')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
 RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
 
+# Configuração Cloudflare Turnstile
+CLOUDFLARE_SECRET = os.getenv('CLOUDFLARE_SECRET_KEY')
+TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+
 
 def get_email_template_to_admin(name, email, subject, message):
-    """
-    Template do email que vai para o ADMIN (você recebe a mensagem)
-    """
+
     return f"""
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -492,6 +495,42 @@ def get_confirmation_email_template(name):
     """
 
 
+def verify_turnstile_token(token, remote_ip=None):
+    """
+    Valida o token do Cloudflare Turnstile
+    
+    Args:
+        token (str): Token gerado pelo widget Turnstile
+        remote_ip (str, optional): IP do cliente (opcional)
+    
+    Returns:
+        dict: Resposta da API Cloudflare
+    """
+    if not token:
+        return {'success': False, 'error-codes': ['missing-input-response']}
+    
+    if not CLOUDFLARE_SECRET:
+        print("⚠️ AVISO: CLOUDFLARE_SECRET não configurada!")
+        return {'success': False, 'error-codes': ['missing-secret-key']}
+    
+    payload = {
+        'secret': CLOUDFLARE_SECRET,
+        'response': token
+    }
+    
+    # Adiciona IP se fornecido
+    if remote_ip:
+        payload['remoteip'] = remote_ip
+    
+    try:
+        response = requests.post(TURNSTILE_VERIFY_URL, data=payload, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Erro ao validar Turnstile: {e}")
+        return {'success': False, 'error-codes': ['connection-error']}
+
+
 @app.route('/api/send-email', methods=['POST'])
 def send_email():
     """
@@ -499,11 +538,41 @@ def send_email():
     Envia 2 emails:
     1. Para você (admin) com a mensagem da pessoa
     2. Para a pessoa com confirmação automática decorada
+    
+    PROTEGIDO POR CLOUDFLARE TURNSTILE (Anti-bot)
     """
     try:
         data = request.get_json()
         
-        # Validação dos campos
+        # ===== 1. VALIDAÇÃO DO CAPTCHA (Turnstile) =====
+        token_captcha = data.get('token_captcha')
+        
+        if not token_captcha:
+            return jsonify({
+                'success': False,
+                'message': '🤖 Captcha obrigatório! Por favor, complete a verificação.'
+            }), 400
+        
+        # Pega o IP real do cliente (considerando proxies/cloudflare)
+        client_ip = request.headers.get('CF-Connecting-IP') or \
+                    request.headers.get('X-Forwarded-For', '').split(',')[0].strip() or \
+                    request.remote_addr
+        
+        # Valida o token com Cloudflare
+        verification = verify_turnstile_token(token_captcha, client_ip)
+        
+        if not verification.get('success'):
+            error_codes = verification.get('error-codes', [])
+            print(f"❌ Falha na verificação Turnstile: {error_codes}")
+            
+            return jsonify({
+                'success': False,
+                'message': '🚫 Falha na verificação do Captcha. Você é um robô? Tente novamente.'
+            }), 403
+        
+        print(f"✅ Captcha validado com sucesso! IP: {client_ip}")
+        
+        # ===== 2. VALIDAÇÃO DOS CAMPOS DO FORMULÁRIO =====
         required_fields = ['name', 'email', 'subject', 'message']
         for field in required_fields:
             if field not in data or not data[field].strip():

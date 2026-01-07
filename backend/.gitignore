@@ -27,3 +27,7 @@ instance/
 # OS
 .DS_Store
 Thumbs.db
+
+
+#js
+js/config.js
